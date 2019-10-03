@@ -2,7 +2,7 @@
 package io.estrado;
 
 def workerLabel() {
-    return "worker-${UUID.randomUUID.toString()}"
+    return "worker-${UUID.randomUUID().toString()}"
 }
 def kubectlTest() {
     // Test that kubectl can correctly communication with the Kubernetes API
@@ -81,6 +81,7 @@ def gitEnvVars() {
         error "${e}"
     }
     println "env.GIT_COMMIT_ID ==> ${env.GIT_COMMIT_ID}"
+    println "env.GIT_SHA ==> ${env.GIT_SHA}"
 
     sh 'git config --get remote.origin.url> git_remote_origin_url.txt'
     try {
