@@ -92,6 +92,16 @@ def gitEnvVars() {
     println "env.GIT_REMOTE_URL ==> ${env.GIT_REMOTE_URL}"
 }
 
+def ecrLogin(Map args) {
+    println "Getting credentials from aws ecr get-login"
+    def ecr_login = sh(script: "aws ecr get-login --registry-ids ${args.aws_id} --region ${args.region} --no-include-email")
+    sh """
+    credentials=`aws ecr get-login --registry-ids ${args.aws_id} --region ${args.region} --no-include-email`
+    \$credentials
+    """
+    println "Applied ecr login successfully to the container"
+}
+
 
 def containerBuildPub(Map args) {
 
@@ -110,17 +120,28 @@ def containerBuildPub(Map args) {
     }
 }
 
-def getContainerTags(config, Map tags = [:]) {
+def dockerBuildPush(Map args){
+    println "Building Docker image ${args.repo} from file ${args.dockerfile}"
+    sh """
+    docker build --build-arg VCS_REF=${env.GIT_SHA} --build-arg BUILD_DATE=`date -u +'%Y-%m-%dT%H:%M:%SZ'` -t ${args.repo}:${args.tags} -f ${args.dockerfile} .
+    """
+    println "Pushing Docker image ${args.repo}:${args.tags} to ECR"
+    sh """
+    docker push ${args.repo}:${args.tags}
+    """
+}
+
+def getContainerTags(version_tag, Map tags = [:]) {
 
     println "getting list of tags for container"
     def String commit_tag
-    def String version_tag
 
     try {
         // if PR branch tag with only branch name
-        if (env.BRANCH_NAME.contains('PR')) {
+        if (env.BRANCH_NAME.contains('pu')) {
             commit_tag = env.BRANCH_NAME
             tags << ['commit': commit_tag]
+            tags << ['version': version_tag]
             return tags
         }
     } catch (Exception e) {
