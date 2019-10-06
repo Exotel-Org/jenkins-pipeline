@@ -4,6 +4,7 @@ package io.estrado;
 def workerLabel() {
     return "worker-${UUID.randomUUID().toString()}"
 }
+
 def kubectlTest() {
     // Test that kubectl can correctly communication with the Kubernetes API
     println "checking kubectl connnectivity to the API"
@@ -58,9 +59,9 @@ def helmDeploy(Map args) {
 }
 
 def helmDelete(Map args) {
-        println "Running helm delete ${args.name}"
+    println "Running helm delete ${args.name}"
 
-        sh "helm delete ${args.name}"
+    sh "helm delete ${args.name}"
 }
 
 def helmTest(Map args) {
@@ -93,13 +94,14 @@ def gitEnvVars() {
 }
 
 def ecrLogin(Map args) {
+
     println "Getting credentials from aws ecr get-login"
-    def ecr_login = sh(script: "aws ecr get-login --registry-ids ${args.aws_id} --region ${args.region} --no-include-email")
     sh """
     credentials=`aws ecr get-login --registry-ids ${args.aws_id} --region ${args.region} --no-include-email`
     \$credentials
     """
     println "Applied ecr login successfully to the container"
+
 }
 
 
@@ -120,10 +122,12 @@ def containerBuildPub(Map args) {
     }
 }
 
-def dockerBuildPush(Map args){
+def dockerBuildPush(Map args) {
     println "Building Docker image ${args.repo} from file ${args.dockerfile}"
     sh """
-    docker build --build-arg VCS_REF=${env.GIT_SHA} --build-arg BUILD_DATE=`date -u +'%Y-%m-%dT%H:%M:%SZ'` -t ${args.repo}:${args.tags} -f ${args.dockerfile} .
+    docker build --build-arg VCS_REF=${env.GIT_SHA} --build-arg BUILD_DATE=`date -u +'%Y-%m-%dT%H:%M:%SZ'` -t ${
+        args.repo
+    }:${args.tags} -f ${args.dockerfile} .
     """
     println "Pushing Docker image ${args.repo}:${args.tags} to ECR"
     sh """
@@ -197,15 +201,15 @@ def getContainerRepoAcct(config) {
 }
 
 @NonCPS
-def getMapValues(Map map=[:]) {
+def getMapValues(Map map = [:]) {
     // jenkins and workflow restriction force this function instead of map.values(): https://issues.jenkins-ci.org/browse/JENKINS-27421
     def entries = []
     def map_values = []
 
     entries.addAll(map.entrySet())
 
-    for (int i=0; i < entries.size(); i++){
-        String value =  entries.get(i).value
+    for (int i = 0; i < entries.size(); i++) {
+        String value = entries.get(i).value
         map_values.add(value)
     }
 
