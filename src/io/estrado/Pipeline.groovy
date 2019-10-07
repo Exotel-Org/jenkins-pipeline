@@ -135,55 +135,21 @@ def dockerBuildPush(Map args) {
     """
 }
 
-def getContainerTags(version_tag, Map tags = [:]) {
+def getContainerTags(version_tag, repository_name, aws_id , aws_region) {
 
-    println "getting list of tags for container"
-    def String commit_tag
 
-    try {
-        // if PR branch tag with only branch name
-        if (env.BRANCH_NAME.contains('pu')) {
-            commit_tag = env.BRANCH_NAME
-            tags << ['commit': commit_tag]
-            tags << ['version': version_tag]
-            return tags
-        }
-    } catch (Exception e) {
-        println "WARNING: commit unavailable from env. ${e}"
+    //Calculate new tags only when the user didn't specify any version tag in Jenkinsfile
+    //This might break the build if the user enters an already existing tag number
+    if(version_tag == ""){
+        def last_tag = sh(script: "aws ecr describe-images --repository-name ${repository_name} --region ${aws_region} --registry-id ${aws_id} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]'", returnStdout: true)
+        def tag_array = last_tag.tokenize(".")
+        def increment = (tag_array[2].replace("\"", "") as Integer) + 1
+        tag_array.set(2, increment)
+        return tag_array.join(".").replace("\"", "")
+
+    }else{
+        return version_tag
     }
-
-    // commit tag
-    try {
-        // if branch available, use as prefix, otherwise only commit hash
-        if (env.BRANCH_NAME) {
-            commit_tag = env.BRANCH_NAME + '-' + env.GIT_COMMIT_ID.substring(0, 7)
-        } else {
-            commit_tag = env.GIT_COMMIT_ID.substring(0, 7)
-        }
-        tags << ['commit': commit_tag]
-    } catch (Exception e) {
-        println "WARNING: commit unavailable from env. ${e}"
-    }
-
-    // master tag
-    try {
-        if (env.BRANCH_NAME == 'master') {
-            tags << ['master': 'latest']
-        }
-    } catch (Exception e) {
-        println "WARNING: branch unavailable from env. ${e}"
-    }
-
-    // build tag only if none of the above are available
-    if (!tags) {
-        try {
-            tags << ['build': env.BUILD_TAG]
-        } catch (Exception e) {
-            println "WARNING: build tag unavailable from config.project. ${e}"
-        }
-    }
-
-    return tags
 }
 
 def getContainerRepoAcct(config) {
