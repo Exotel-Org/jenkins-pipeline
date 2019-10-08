@@ -142,6 +142,10 @@ def getContainerTags(version_tag, repository_name, aws_id , aws_region) {
     //This might break the build if the user enters an already existing tag number
     if(version_tag == ""){
         def last_tag = sh(script: "aws ecr describe-images --repository-name ${repository_name} --region ${aws_region} --registry-id ${aws_id} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]'", returnStdout: true)
+        if ( last_tag?.trim() ){
+            //default tag
+            return "1.0.0"
+        }
         def tag_array = last_tag.tokenize(".")
         def increment = (tag_array[2].replace("\"", "") as Integer) + 1
         tag_array.set(2, increment)
