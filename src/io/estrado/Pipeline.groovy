@@ -5,6 +5,36 @@ def workerLabel() {
     return "worker-${UUID.randomUUID().toString()}"
 }
 
+def gitClone(Map args) {
+    checkout([$class: 'GitSCM', branches: [[name: args.branch]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CloneOption', honorRefspec: true, noTags: false, reference: '', shallow: true, timeout: 10]], submoduleCfg: [], userRemoteConfigs: [[credentialsId: args.credential_key, url: args.url]]])
+}
+
+def setGitGlobalVars(Map args) {
+    sh """
+        git config --global user.name ${args.username}
+        git config --global user.email ${args.email}
+    """
+}
+
+def gitPush(Map args) {
+    sh """
+     #!/usr/bin/env bash
+     set +x 
+     export GIT_SSH_COMMAND="ssh -oStrictHostKeyChecking=no"
+     git pull origin ${args.branch}
+    """
+    def isFilesChanged = sh(script: "git status --porcelain | wc -l ", returnStdout: true)
+    println "Is Files Changed: ${isFilesChanged}"
+    if (isFilesChanged?.trim()){
+        sh """
+             git add .
+             git commit -m "${args.commit_msg}"
+             git push -f origin HEAD:${args.branch}
+        """
+    }
+}
+
+
 def kubectlTest() {
     // Test that kubectl can correctly communication with the Kubernetes API
     println "checking kubectl connnectivity to the API"
@@ -135,14 +165,14 @@ def dockerBuildPush(Map args) {
     """
 }
 
-def getContainerTags(version_tag, repository_name, aws_id , aws_region) {
+def getContainerTags(Map args) {
 
 
     //Calculate new tags only when the user didn't specify any version tag in Jenkinsfile
     //This might break the build if the user enters an already existing tag number
-    if(version_tag == ""){
-        def last_tag = sh(script: "aws ecr describe-images --repository-name ${repository_name} --region ${aws_region} --registry-id ${aws_id} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]'", returnStdout: true)
-        if ( last_tag?.trim() == ""){
+    if (args.version_tag == "") {
+        def last_tag = sh(script: "aws ecr describe-images --repository-name ${args.repository} --region ${args.aws_region} --registry-id ${args.aws_id} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]'", returnStdout: true)
+        if (last_tag?.trim() == "") {
             //default tag
             return "1.0.0"
         }
@@ -151,9 +181,14 @@ def getContainerTags(version_tag, repository_name, aws_id , aws_region) {
         tag_array.set(2, increment)
         return tag_array.join(".").replace("\"", "")
 
-    }else{
-        return version_tag
+    } else {
+        return args.version_tag
     }
+}
+
+def getLatestImageTag(Map args){
+    def last_tag = sh(script: "aws ecr describe-images --repository-name ${args.repository} --region ${args.aws_region} --registry-id ${args.aws_id} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]'", returnStdout: true)
+    return last_tag.trim().replace("\"", "")
 }
 
 def getContainerRepoAcct(config) {
