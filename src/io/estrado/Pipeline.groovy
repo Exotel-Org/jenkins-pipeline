@@ -25,7 +25,7 @@ def gitPush(Map args) {
     """
     def isFilesChanged = sh(script: "git status --porcelain | wc -l ", returnStdout: true)
     println "Is Files Changed: ${isFilesChanged}"
-    if (isFilesChanged?.trim()){
+    if (isFilesChanged?.trim() != "0" ){
         sh """
              git add .
              git commit -m "${args.commit_msg}"
