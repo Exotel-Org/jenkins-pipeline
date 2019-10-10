@@ -26,10 +26,16 @@ def gitPush(Map args) {
     def isFilesChanged = sh(script: "git status --porcelain | wc -l ", returnStdout: true)
     println "Is Files Changed: ${isFilesChanged}"
     if (isFilesChanged?.trim() != "0" ){
+        
         sh """
              git add .
              git commit -m "${args.commit_msg}"
-             git push -f origin HEAD:${args.branch}
+        """
+        if (args.tag) {
+            sh """git tag ${args.tag}"""
+        }
+        sh """
+            git push -f origin HEAD:${args.branch} --tags
         """
     }
 }
