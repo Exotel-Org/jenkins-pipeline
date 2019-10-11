@@ -1,6 +1,17 @@
 #!/usr/bin/groovy
 package io.estrado;
 
+import static groovy.json.JsonOutput.toJson
+
+
+def googlePush(String user, final String message, final String url = env.GOOGLE_CHAT_URL) {
+    def buildMessage = "<users/${user}>\n${env.BUILD_TAG}:  ${env.BUILD_URL}\n```\n${message}\n```"
+
+    final String requestBody = toJson([text: buildMessage])
+    echo requestBody
+    httpRequest(requestBody: requestBody, url: url, httpMode: 'POST', contentType: 'APPLICATION_JSON_UTF8')
+}
+
 def workerLabel() {
     return "worker-${UUID.randomUUID().toString()}"
 }
@@ -210,6 +221,10 @@ def getContainerRepoAcct(config) {
     }
 
     return acct
+}
+
+def pushNotify(){
+
 }
 
 @NonCPS
