@@ -6,7 +6,8 @@ def workerLabel() {
 }
 
 def gitClone(Map args) {
-    checkout([$class: 'GitSCM', branches: [[name: args.branch]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CloneOption', honorRefspec: true, noTags: false, reference: '', shallow: true, timeout: 10]], submoduleCfg: [], userRemoteConfigs: [[credentialsId: args.credential_key, url: args.url]]])
+    def result = checkout([$class: 'GitSCM', branches: [[name: args.branch]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CloneOption', honorRefspec: true, noTags: false, reference: '', shallow: true, timeout: 10]], submoduleCfg: [], userRemoteConfigs: [[credentialsId: args.credential_key, url: args.url]]])
+    return result.GIT_COMMIT
 }
 
 def setGitGlobalVars(Map args) {
