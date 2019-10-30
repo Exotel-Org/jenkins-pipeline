@@ -205,7 +205,7 @@ def getContainerTags(Map args) {
 }
 
 def getLatestImageTag(Map args){
-    def last_tag = sh(script: "aws ecr describe-images --repository-name ${args.repository} --region ${args.aws_region} --registry-id ${args.aws_id} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]'", returnStdout: true)
+    def last_tag = sh(script: "aws ecr describe-images --repository-name ${args.repository} --region ${args.aws_region} --registry-id ${args.aws_id} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[-1]'", returnStdout: true)
     return last_tag.trim().replace("\"", "")
 }
 
