@@ -189,7 +189,7 @@ def getContainerTags(Map args) {
     //Calculate new tags only when the user didn't specify any version tag in Jenkinsfile
     //This might break the build if the user enters an already existing tag number
     if (args.version_tag == "") {
-        def last_tag = sh(script: "aws ecr describe-images --repository-name ${args.repository} --region ${args.aws_region} --registry-id ${args.aws_id} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]'", returnStdout: true)
+        def last_tag = sh(script: "aws ecr describe-images --repository-name ${args.repository} --region ${args.aws_region} --registry-id ${args.aws_id} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[-1]'", returnStdout: true)
         if (last_tag?.trim() == "") {
             //default tag
             return "1.0.0"
