@@ -179,8 +179,8 @@ def dockerBuildPush(Map args) {
     """
     println "Pushing Docker image ${args.repo}:${args.tags} to ECR"
     sh """
-    docker tag ${args.tags} ${args.repo}
-    docker push ${args.repo}
+    docker tag ${args.repo}:latest  ${args.repo}:${args.tags}
+    docker push ${args.repo}:${args.tags}
     """
 }
 
