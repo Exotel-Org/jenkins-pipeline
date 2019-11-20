@@ -175,11 +175,12 @@ def dockerBuildPush(Map args) {
     sh """
     docker build --build-arg VCS_REF=${env.GIT_SHA} --build-arg BUILD_DATE=`date -u +'%Y-%m-%dT%H:%M:%SZ'` -t ${
         args.repo
-    }:${args.tags} -f ${args.dockerfile} .
+    } -f ${args.dockerfile} .
     """
     println "Pushing Docker image ${args.repo}:${args.tags} to ECR"
     sh """
-    docker push ${args.repo}:${args.tags}
+    docker tag ${args.tags} ${args.repo}
+    docker push ${args.repo}
     """
 }
 
